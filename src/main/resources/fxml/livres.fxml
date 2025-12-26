@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
+    fx:controller="com.bibliotheque.controller.LivreController" spacing="10" style="-fx-padding: 10;">
+    
+    <!-- Formulaire d'ajout/modification -->
+    <TitledPane text="Formulaire de Livre" collapsible="false">
+        <GridPane hgap="10" vgap="10" style="-fx-padding: 10;">
+            <Label text="ISBN:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <TextField fx:id="tfISBN" GridPane.columnIndex="1" GridPane.rowIndex="0" promptText="978-XXXXXXXXXX"/>
+            
+            <Label text="Titre:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <TextField fx:id="tfTitre" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            
+            <Label text="Auteur:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+            <TextField fx:id="tfAuteur" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+            
+            <Label text="Année:" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+            <Spinner fx:id="spinnerAnnee" GridPane.columnIndex="3" GridPane.rowIndex="0" 
+                     prefWidth="100" initialValue="2024" min="1000" max="2100"/>
+            
+            <Label text="Disponible:" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+            <CheckBox fx:id="cbDisponible" GridPane.columnIndex="3" GridPane.rowIndex="1" selected="true"/>
+            
+            <HBox spacing="10" GridPane.columnIndex="0" GridPane.columnSpan="4" GridPane.rowIndex="3">
+                <Button fx:id="btnAjouter" text="Ajouter" onAction="#handleAjouter" style="-fx-padding: 8;"/>
+                <Button fx:id="btnModifier" text="Modifier" onAction="#handleModifier" style="-fx-padding: 8;"/>
+                <Button fx:id="btnSupprimer" text="Supprimer" onAction="#handleSupprimer" style="-fx-padding: 8;"/>
+            </HBox>
+        </GridPane>
+    </TitledPane>
+    
+    <!-- Barre de recherche -->
+    <HBox spacing="10">
+        <Label text="Rechercher:"/>
+        <TextField fx:id="tfRecherche" HBox.hgrow="ALWAYS" promptText="Titre ou auteur..."/>
+        <Button fx:id="btnRechercher" text="Rechercher" onAction="#handleRechercher"/>
+    </HBox>
+    
+    <!-- Tableau des livres -->
+    <Label text="Liste des Livres" style="-fx-font-weight: bold; -fx-font-size: 12;"/>
+    <TableView fx:id="tableViewLivres" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colISBN" text="ISBN" prefWidth="120" 
+                         cellValueFactory="cellData"/>
+            <TableColumn fx:id="colTitre" text="Titre" prefWidth="200" 
+                         cellValueFactory="cellData"/>
+            <TableColumn fx:id="colAuteur" text="Auteur" prefWidth="150" 
+                         cellValueFactory="cellData"/>
+            <TableColumn fx:id="colAnnee" text="Année" prefWidth="80" 
+                         cellValueFactory="cellData"/>
+            <TableColumn fx:id="colDisponible" text="Disponible" prefWidth="100" 
+                         cellValueFactory="cellData"/>
+        </columns>
+    </TableView>
+</VBox>
