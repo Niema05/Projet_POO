@@ -1,8 +1,5 @@
-
-
 CREATE DATABASE IF NOT EXISTS bibliotheque;
 USE bibliotheque;
-
 
 CREATE TABLE IF NOT EXISTS livres (
     isbn VARCHAR(20) PRIMARY KEY,
@@ -15,8 +12,6 @@ CREATE TABLE IF NOT EXISTS livres (
 
 CREATE INDEX idx_livres_titre ON livres(titre);
 CREATE INDEX idx_livres_auteur ON livres(auteur);
-
-
 
 CREATE TABLE IF NOT EXISTS membres (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -37,10 +32,8 @@ CREATE TABLE IF NOT EXISTS emprunts (
     date_retour_prevue DATE NOT NULL,
     date_retour_effective DATE DEFAULT NULL,
     penalite DOUBLE DEFAULT 0,
-    CONSTRAINT fk_livre FOREIGN KEY (isbn)
-        REFERENCES livres(isbn) ON DELETE CASCADE,
-    CONSTRAINT fk_membre FOREIGN KEY (membre_id)
-        REFERENCES membres(id) ON DELETE CASCADE
+    FOREIGN KEY (isbn) REFERENCES livres(isbn) ON DELETE CASCADE,
+    FOREIGN KEY (membre_id) REFERENCES membres(id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_emprunt_en_cours ON emprunts(date_retour_effective);
@@ -55,7 +48,7 @@ INSERT INTO membres (nom, prenom, email, actif, date_inscription) VALUES
 ('Martin', 'Marie', 'marie.martin@example.com', TRUE, '2024-02-20'),
 ('Bernard', 'Pierre', 'pierre.bernard@example.com', FALSE, '2024-03-10');
 
-
-SELECT 'Base de données créée avec succès' AS message;
 SELECT COUNT(*) AS nombre_livres FROM livres;
 SELECT COUNT(*) AS nombre_membres FROM membres;
+
+
