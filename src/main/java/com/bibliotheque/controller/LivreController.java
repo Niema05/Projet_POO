@@ -1,25 +1,28 @@
-package com.bibliotheque.controller;
+package controller;
 
-import com.bibliotheque.exception.ValidationException;
-import com.bibliotheque.model.Livre;
-import com.bibliotheque.service.BibliothequeService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import model.Livre;
+import service.BibliothequeService;
+import exception.ValidationException;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Contrôleur pour la gestion des livres.
+ * Contrôleur pour la gestion des livres dans l'interface JavaFX
  */
 public class LivreController {
-
+    
+    // Composants FXML - TableView
     @FXML
     private TableView<Livre> tableViewLivres;
     @FXML
-    private TableColumn<Livre, String> colISBN;
+    private TableColumn<Livre, String> colIsbn;
     @FXML
     private TableColumn<Livre, String> colTitre;
     @FXML
@@ -28,20 +31,28 @@ public class LivreController {
     private TableColumn<Livre, Integer> colAnnee;
     @FXML
     private TableColumn<Livre, Boolean> colDisponible;
-
+    
+    // Composants FXML - Formulaire
     @FXML
-    private TextField tfISBN;
+    private TextField txtIsbn;
     @FXML
-    private TextField tfTitre;
+    private TextField txtTitre;
     @FXML
-    private TextField tfAuteur;
+    private TextField txtAuteur;
     @FXML
-    private Spinner<Integer> spinnerAnnee;
+    private TextField txtAnnee;
     @FXML
-    private CheckBox cbDisponible;
-
+    private TextField txtRecherche;
+    
+    // Composants FXML - Statistiques
     @FXML
-    private TextField tfRecherche;
+    private Label lblTotal;
+    @FXML
+    private Label lblDisponibles;
+    @FXML
+    private Label lblEmpruntes;
+    
+    // Boutons
     @FXML
     private Button btnAjouter;
     @FXML
@@ -50,153 +61,266 @@ public class LivreController {
     private Button btnSupprimer;
     @FXML
     private Button btnRechercher;
-
+    @FXML
+    private Button btnRafraichir;
+    @FXML
+    private Button btnNouveau;
+    
+    // Service
     private BibliothequeService service;
-
+    private ObservableList<Livre> livresObservable;
+    
     /**
-     * Définit le service.
-     *
-     * @param service le service de bibliothèque
+     * Initialisation du contrôleur
      */
-    public void setService(BibliothequeService service) {
-        this.service = service;
-        chargerLivres();
+    @FXML
+    public void initialize() {
+        service = new BibliothequeService();
+        livresObservable = FXCollections.observableArrayList();
+        
+        // Configuration des colonnes du TableView
+        colIsbn.setCellValueFactory(new PropertyValueFactory<>("isbn"));
+        colTitre.setCellValueFactory(new PropertyValueFactory<>("titre"));
+        colAuteur.setCellValueFactory(new PropertyValueFactory<>("auteur"));
+        colAnnee.setCellValueFactory(new PropertyValueFactory<>("anneePublication"));
+        colDisponible.setCellValueFactory(new PropertyValueFactory<>("disponible"));
+        
+        // Lier les données au TableView
+        tableViewLivres.setItems(livresObservable);
+        
+        // Listener pour la sélection dans le tableau
+        tableViewLivres.getSelectionModel().selectedItemProperty().addListener(
+            (obs, oldSelection, newSelection) -> {
+                if (newSelection != null) {
+                    afficherLivre(newSelection);
+                }
+            }
+        );
+        
+        // Charger les données initiales
+        chargerTousLesLivres();
+        rafraichirStatistiques();
     }
-
+    
     /**
-     * Charge tous les livres dans le tableau.
+     * Gère l'ajout d'un nouveau livre
      */
-    private void chargerLivres() {
+    @FXML
+    private void handleAjouter() {
+        try {
+            Livre livre = creerLivreDepuisFormulaire();
+            service.ajouterLivre(livre);
+            
+            afficherSucces("Livre ajouté avec succès");
+            viderFormulaire();
+            chargerTousLesLivres();
+            rafraichirStatistiques();
+            
+        } catch (ValidationException e) {
+            afficherErreur("Validation", e.getMessage());
+        } catch (SQLException e) {
+            afficherErreur("Erreur base de données", e.getMessage());
+        }
+    }
+    
+    /**
+     * Gère la modification d'un livre existant
+     */
+    @FXML
+    private void handleModifier() {
+        Livre selection = tableViewLivres.getSelectionModel().getSelectedItem();
+        if (selection == null) {
+            afficherAvertissement("Aucune sélection", "Veuillez sélectionner un livre à modifier");
+            return;
+        }
+        
+        try {
+            Livre livre = creerLivreDepuisFormulaire();
+            livre.setDisponible(selection.isDisponible()); // Conserver le statut
+            service.modifierLivre(livre);
+            
+            afficherSucces("Livre modifié avec succès");
+            chargerTousLesLivres();
+            
+        } catch (ValidationException e) {
+            afficherErreur("Validation", e.getMessage());
+        } catch (SQLException e) {
+            afficherErreur("Erreur base de données", e.getMessage());
+        }
+    }
+    
+    /**
+     * Gère la suppression d'un livre
+     */
+    @FXML
+    private void handleSupprimer() {
+        Livre selection = tableViewLivres.getSelectionModel().getSelectedItem();
+        if (selection == null) {
+            afficherAvertissement("Aucune sélection", "Veuillez sélectionner un livre à supprimer");
+            return;
+        }
+        
+        // Confirmation
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Confirmation");
+        confirmation.setHeaderText("Supprimer le livre ?");
+        confirmation.setContentText("Êtes-vous sûr de vouloir supprimer : " + selection.getTitre());
+        
+        Optional<ButtonType> result = confirmation.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                service.supprimerLivre(selection.getIsbn());
+                afficherSucces("Livre supprimé avec succès");
+                viderFormulaire();
+                chargerTousLesLivres();
+                rafraichirStatistiques();
+                
+            } catch (SQLException e) {
+                afficherErreur("Erreur base de données", e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Gère la recherche de livres
+     */
+    @FXML
+    private void handleRechercher() {
+        String recherche = txtRecherche.getText().trim();
+        
+        if (recherche.isEmpty()) {
+            chargerTousLesLivres();
+            return;
+        }
+        
+        try {
+            List<Livre> resultats = service.rechercherLivres(recherche);
+            livresObservable.clear();
+            livresObservable.addAll(resultats);
+            
+            if (resultats.isEmpty()) {
+                afficherInformation("Recherche", "Aucun livre trouvé");
+            }
+            
+        } catch (SQLException e) {
+            afficherErreur("Erreur recherche", e.getMessage());
+        }
+    }
+    
+    /**
+     * Rafraîchit la liste complète des livres
+     */
+    @FXML
+    private void handleRafraichir() {
+        chargerTousLesLivres();
+        rafraichirStatistiques();
+        txtRecherche.clear();
+        afficherInformation("Rafraîchissement", "Liste mise à jour");
+    }
+    
+    /**
+     * Prépare le formulaire pour un nouveau livre
+     */
+    @FXML
+    private void handleNouveau() {
+        viderFormulaire();
+        tableViewLivres.getSelectionModel().clearSelection();
+    }
+    
+    /**
+     * Charge tous les livres depuis la base de données
+     */
+    private void chargerTousLesLivres() {
         try {
             List<Livre> livres = service.getTousLesLivres();
-            ObservableList<Livre> data = FXCollections.observableArrayList(livres);
-            tableViewLivres.setItems(data);
+            livresObservable.clear();
+            livresObservable.addAll(livres);
         } catch (SQLException e) {
-            afficherErreur("Erreur de chargement", "Impossible de charger les livres : " + e.getMessage());
+            afficherErreur("Erreur chargement", e.getMessage());
         }
     }
-
+    
     /**
-     * Ajoute un nouveau livre.
+     * Rafraîchit les statistiques affichées
      */
-    @FXML
-    public void handleAjouter() {
+    private void rafraichirStatistiques() {
         try {
-            String isbn = tfISBN.getText();
-            String titre = tfTitre.getText();
-            String auteur = tfAuteur.getText();
-            int annee = spinnerAnnee.getValue();
-            boolean disponible = cbDisponible.isSelected();
-
-            Livre livre = new Livre(isbn, titre, auteur, annee, disponible);
-            service.ajouterLivre(livre);
-
-            afficherSucces("Succès", "Livre ajouté avec succès!");
-            nettoyerFormulaire();
-            chargerLivres();
-        } catch (ValidationException e) {
-            afficherErreur("Erreur de validation", e.getMessage());
+            int[] stats = service.getStatistiques();
+            lblTotal.setText(String.valueOf(stats[0]));
+            lblDisponibles.setText(String.valueOf(stats[1]));
+            lblEmpruntes.setText(String.valueOf(stats[2]));
         } catch (SQLException e) {
-            afficherErreur("Erreur de base de données", e.getMessage());
+            afficherErreur("Erreur statistiques", e.getMessage());
         }
     }
-
+    
     /**
-     * Modifie le livre sélectionné.
+     * Crée un objet Livre à partir des données du formulaire
      */
-    @FXML
-    public void handleModifier() {
-        Livre selected = tableViewLivres.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            afficherErreur("Erreur", "Veuillez sélectionner un livre");
-            return;
-        }
-
+    private Livre creerLivreDepuisFormulaire() throws ValidationException {
         try {
-            selected.setTitre(tfTitre.getText());
-            selected.setAuteur(tfAuteur.getText());
-            selected.setAnneePublication(spinnerAnnee.getValue());
-            selected.setDisponible(cbDisponible.isSelected());
-
-            service.modifierLivre(selected);
-
-            afficherSucces("Succès", "Livre modifié avec succès!");
-            nettoyerFormulaire();
-            chargerLivres();
-        } catch (ValidationException e) {
-            afficherErreur("Erreur de validation", e.getMessage());
-        } catch (SQLException e) {
-            afficherErreur("Erreur de base de données", e.getMessage());
+            String isbn = txtIsbn.getText().trim();
+            String titre = txtTitre.getText().trim();
+            String auteur = txtAuteur.getText().trim();
+            int annee = Integer.parseInt(txtAnnee.getText().trim());
+            
+            return new Livre(isbn, titre, auteur, annee);
+            
+        } catch (NumberFormatException e) {
+            throw new ValidationException("L'année doit être un nombre valide");
         }
     }
-
+    
     /**
-     * Supprime le livre sélectionné.
+     * Affiche un livre dans le formulaire
      */
-    @FXML
-    public void handleSupprimer() {
-        Livre selected = tableViewLivres.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            afficherErreur("Erreur", "Veuillez sélectionner un livre");
-            return;
-        }
-
-        try {
-            service.supprimerLivre(selected.getIsbn());
-            afficherSucces("Succès", "Livre supprimé avec succès!");
-            nettoyerFormulaire();
-            chargerLivres();
-        } catch (SQLException e) {
-            afficherErreur("Erreur de base de données", e.getMessage());
-        }
+    private void afficherLivre(Livre livre) {
+        txtIsbn.setText(livre.getIsbn());
+        txtTitre.setText(livre.getTitre());
+        txtAuteur.setText(livre.getAuteur());
+        txtAnnee.setText(String.valueOf(livre.getAnneePublication()));
     }
-
+    
     /**
-     * Recherche des livres.
+     * Vide tous les champs du formulaire
      */
-    @FXML
-    public void handleRechercher() {
-        String critere = tfRecherche.getText();
-        if (critere.isEmpty()) {
-            chargerLivres();
-            return;
-        }
-
-        try {
-            List<Livre> livres = service.rechercherLivres(critere);
-            ObservableList<Livre> data = FXCollections.observableArrayList(livres);
-            tableViewLivres.setItems(data);
-        } catch (SQLException e) {
-            afficherErreur("Erreur de recherche", e.getMessage());
-        }
+    private void viderFormulaire() {
+        txtIsbn.clear();
+        txtTitre.clear();
+        txtAuteur.clear();
+        txtAnnee.clear();
     }
-
-    /**
-     * Nettoie le formulaire.
-     */
-    private void nettoyerFormulaire() {
-        tfISBN.clear();
-        tfTitre.clear();
-        tfAuteur.clear();
-        cbDisponible.setSelected(true);
-    }
-
-    /**
-     * Affiche une alerte d'erreur.
-     */
-    private void afficherErreur(String titre, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(titre);
+    
+    // Méthodes d'affichage de messages
+    
+    private void afficherSucces(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Succès");
+        alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
     }
-
-    /**
-     * Affiche une alerte de succès.
-     */
-    private void afficherSucces(String titre, String message) {
+    
+    private void afficherErreur(String titre, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Erreur");
+        alert.setHeaderText(titre);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    
+    private void afficherAvertissement(String titre, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Avertissement");
+        alert.setHeaderText(titre);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    
+    private void afficherInformation(String titre, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(titre);
+        alert.setTitle("Information");
+        alert.setHeaderText(titre);
         alert.setContentText(message);
         alert.showAndWait();
     }
