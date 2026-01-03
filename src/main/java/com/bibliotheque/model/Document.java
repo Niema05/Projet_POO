@@ -1,47 +1,22 @@
-package com.bibliotheque.model;
+package com.biblio.model;
 
-/**
- * Classe abstraite représentant un document dans la bibliothèque.
- * Tous les documents doivent calculer une pénalité de retard.
- */
 public abstract class Document {
-    protected String id;
+
+    protected String isbn;
     protected String titre;
 
-    /**
-     * Constructeur du document.
-     *
-     * @param id    l'identifiant unique du document
-     * @param titre le titre du document
-     */
-    public Document(String id, String titre) {
-        this.id = id;
+    public Document(String isbn, String titre) {
+        this.isbn = isbn;
         this.titre = titre;
     }
 
-    /**
-     * Calcule la pénalité en cas de retard.
-     * À implémenter par les classes concrètes.
-     *
-     * @return la pénalité en DH
-     */
-    public abstract double calculerPenaliteRetard();
-
-    // Getters et Setters
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
+    public String getIsbn() {
+        return isbn;
     }
 
     public String getTitre() {
         return titre;
     }
 
-    public void setTitre(String titre) {
-        this.titre = titre;
-    }
+    public abstract double calculerPenaliteRetard(int jours);
 }
