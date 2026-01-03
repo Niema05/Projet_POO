@@ -61,4 +61,16 @@ public class Emprunt {
     public void setPenalite(double penalite){
         this.penalite = penalite;
     }
+    @Override
+    public String toString() {
+    return "Emprunt{" +
+            "id='" + id + '\'' +
+            ", dateEmprunt=" + dateEmprunt +
+            ", dateRetourPrevue=" + dateRetourPrevue +
+            ", dateRetourEffective=" + dateRetoureffective +
+            ", livre=" + (livre != null ? livre.getTitre() : "null") +
+            ", membre=" + (membre != null ? membre.getNom() + " " + membre.getPrenom() : "null") +
+            ", penalite=" + penalite +
+            '}';
+}
 }
