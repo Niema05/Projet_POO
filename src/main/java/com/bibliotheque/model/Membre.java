@@ -33,5 +33,9 @@ public class Membre extends Personne {
     public void setActif(boolean actif) {
         this.actif = actif;
     }
+    @Override
+    public String toString() {
+        return "Membre #" + id + ": " + super.toString() + " [Actif: " + actif + "]";
+    }
 }
 
