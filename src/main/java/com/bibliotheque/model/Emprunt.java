@@ -61,7 +61,6 @@ public class Emprunt {
     public void setPenalite(double penalite){
         this.penalite = penalite;
     }
-    @Override
     public String toString() {
     return "Emprunt{" +
             "id='" + id + '\'' +
