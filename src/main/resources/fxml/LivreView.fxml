@@ -3,11 +3,19 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="10" xmlns:fx="http://javafx.com/fxml"
+<VBox spacing="10" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.biblio.controller.LivreController">
 
-    <Label text="Gestion des Livres" />
+    <children>
+        <Label text="Gestion des Livres" />
 
-    <TableView fx:id="tableLivres" />
+        <TableView fx:id="tableLivres">
+            <columns>
+                <TableColumn fx:id="colTitre" text="Titre" />
+                <TableColumn fx:id="colAuteur" text="Auteur" />
+                <TableColumn fx:id="colAnnee" text="Année" />
+            </columns>
+        </TableView>
+    </children>
 
 </VBox>
