@@ -1,7 +1,7 @@
 package com.biblio.model;
 
 public class Livre extends Document implements Empruntable {
-
+    super(isbn, titre);
     private String auteur;
     private boolean disponible = true;
 
