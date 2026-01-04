@@ -13,7 +13,6 @@ import javafx.scene.control.*;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.List;
 
 
 public class EmpruntController {
@@ -53,21 +52,14 @@ public class EmpruntController {
     private BibliothequeService bibliothequeService;
     private EmpruntService empruntService;
 
-    /**
-     * Définit les services.
-     *
-     * @param bibliothequeService le service de bibliothèque
-     * @param empruntService      le service d'emprunt
-     */
+
     public void setServices(BibliothequeService bibliothequeService, EmpruntService empruntService) {
         this.bibliothequeService = bibliothequeService;
         this.empruntService = empruntService;
         chargerDonnees();
     }
 
-    /**
-     * Charge tous les emprunts et les données des combos.
-     */
+
     private void chargerDonnees() {
         try {
             chargerLivres();
@@ -78,9 +70,6 @@ public class EmpruntController {
         }
     }
 
-    /**
-     * Charge les livres dans le combo.
-     */
     private void chargerLivres() throws SQLException {
         var livres = bibliothequeService.getTousLesLivres();
         ObservableList<String> items = FXCollections.observableArrayList();
@@ -88,9 +77,6 @@ public class EmpruntController {
         comboLivres.setItems(items);
     }
 
-    /**
-     * Charge les membres dans le combo.
-     */
     private void chargerMembres() throws SQLException {
         var membres = bibliothequeService.getTousLesMembres();
         ObservableList<String> items = FXCollections.observableArrayList();
@@ -98,18 +84,13 @@ public class EmpruntController {
         comboMembres.setItems(items);
     }
 
-    /**
-     * Charge tous les emprunts dans le tableau.
-     */
     private void chargerEmprunts() throws SQLException {
-        var emprunts = empruntService.getTousLesEmprunts();
+        var emprunts = empruntService.getTousEmprunt();
         ObservableList<Emprunt> data = FXCollections.observableArrayList(emprunts);
         tableViewEmprunts.setItems(data);
     }
 
-    /**
-     * Emprunte un livre.
-     */
+
     @FXML
     public void handleEmprunter() {
         try {
@@ -124,7 +105,7 @@ public class EmpruntController {
             String isbn = livreStr.split(" - ")[0];
             int membreId = Integer.parseInt(membreStr.split(" - ")[0]);
 
-            Emprunt emprunt = empruntService.emprunterLivre(isbn, membreId);
+            empruntService.emprunterLivre(isbn, membreId);
             afficherSucces("Succès", "Livre emprunté avec succès!");
             chargerEmprunts();
             chargerLivres();
@@ -135,11 +116,8 @@ public class EmpruntController {
         }
     }
 
-    /**
-     * Retourne un livre emprunté.
-     */
     @FXML
-    public void handleRetourner() {
+    public void handleRetourner() throws LivreIndisponibleException, MembreInactifException {
         Emprunt selected = tableViewEmprunts.getSelectionModel().getSelectedItem();
         if (selected == null) {
             afficherErreur("Erreur", "Veuillez sélectionner un emprunt");
@@ -147,7 +125,7 @@ public class EmpruntController {
         }
 
         try {
-            empruntService.retournerLivre(selected.getId());
+            empruntService.retournerLivre(selected.getLivre().getIsbn(),selected.getMembre().getId());
             afficherSucces("Succès", "Livre retourné avec succès!");
             chargerEmprunts();
             chargerLivres();
@@ -156,9 +134,6 @@ public class EmpruntController {
         }
     }
 
-    /**
-     * Affiche les emprunts en cours.
-     */
     @FXML
     public void handleAfficherEnCours() {
         try {
@@ -170,13 +145,11 @@ public class EmpruntController {
         }
     }
 
-    /**
-     * Affiche les emprunts en retard.
-     */
+
     @FXML
     public void handleAfficherEnRetard() {
         try {
-            var emprunts = empruntService.getEmpruntsEnRetard();
+            var emprunts = empruntService.getEmpruntEnRetard();
             ObservableList<Emprunt> data = FXCollections.observableArrayList(emprunts);
             tableViewEmprunts.setItems(data);
         } catch (SQLException e) {
@@ -184,9 +157,7 @@ public class EmpruntController {
         }
     }
 
-    /**
-     * Affiche tous les emprunts.
-     */
+    
     @FXML
     public void handleAfficherTous() {
         try {
@@ -196,9 +167,7 @@ public class EmpruntController {
         }
     }
 
-    /**
-     * Affiche une alerte d'erreur.
-     */
+
     private void afficherErreur(String titre, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(titre);
@@ -206,9 +175,7 @@ public class EmpruntController {
         alert.showAndWait();
     }
 
-    /**
-     * Affiche une alerte de succès.
-     */
+
     private void afficherSucces(String titre, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(titre);
