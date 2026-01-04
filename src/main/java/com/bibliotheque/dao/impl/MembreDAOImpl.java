@@ -1,143 +1,152 @@
-package com.bibliotheque.dao.impl;
+package dao.impl;
 
-import com.bibliotheque.dao.MembreDAO;
-import com.bibliotheque.model.Membre;
+import dao.MembreDAO;
+import model.Membre;
 import com.bibliotheque.util.DatabaseConnection;
+
 import java.sql.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Implémentation DAO pour les membres avec MySQL.
- */
 public class MembreDAOImpl implements MembreDAO {
 
-    /**
-     * Mappe un ResultSet à un objet Membre.
-     *
-     * @param rs le ResultSet
-     * @return l'objet Membre
-     * @throws SQLException si une erreur SQL survient
-     */
-    private Membre mapResultSetToEntity(ResultSet rs) throws SQLException {
-        return new Membre(
-                rs.getInt("id"),
-                rs.getString("nom"),
-                rs.getString("prenom"),
-                rs.getString("email"),
-                rs.getBoolean("actif"),
-                rs.getDate("date_inscription").toLocalDate()
-        );
-    }
-
     @Override
-    public void save(Membre membre) throws SQLException {
-        String sql = "INSERT INTO membres (nom, prenom, email, actif, date_inscription) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-            stmt.setString(1, membre.getNom());
-            stmt.setString(2, membre.getPrenom());
-            stmt.setString(3, membre.getEmail());
-            stmt.setBoolean(4, membre.isActif());
-            stmt.setDate(5, Date.valueOf(membre.getDateInscription()));
-            stmt.executeUpdate();
+    public void save(Membre membre) {
+        String sql = "INSERT INTO membres (nom, email, actif) VALUES (?, ?, ?)";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+
+            ps.setString(1, membre.getNom());
+            ps.setString(2, membre.getEmail());
+            ps.setBoolean(3, membre.isActif());
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors de l'ajout du membre", e);
         }
     }
 
     @Override
-    public Membre findById(String id) throws SQLException {
-        try {
-            int idInt = Integer.parseInt(id);
-            return findByIntId(idInt);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    @Override
-    public Membre findByIntId(int id) throws SQLException {
+    public Membre findById(int id) {
         String sql = "SELECT * FROM membres WHERE id = ?";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToEntity(rs);
-                }
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return mapToMembre(rs);
             }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findById", e);
         }
         return null;
     }
 
     @Override
-    public List<Membre> findAll() throws SQLException {
+    public List<Membre> findAll() {
         List<Membre> membres = new ArrayList<>();
         String sql = "SELECT * FROM membres";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+
             while (rs.next()) {
-                membres.add(mapResultSetToEntity(rs));
+                membres.add(mapToMembre(rs));
             }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findAll", e);
         }
         return membres;
     }
 
     @Override
-    public Membre findByEmail(String email) throws SQLException {
+    public void update(Membre membre) {
+        String sql = "UPDATE membres SET nom = ?, email = ?, actif = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, membre.getNom());
+            ps.setString(2, membre.getEmail());
+            ps.setBoolean(3, membre.isActif());
+            ps.setInt(4, membre.getId());
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur update", e);
+        }
+    }
+
+    @Override
+    public void delete(int id) {
+        String sql = "DELETE FROM membres WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur delete", e);
+        }
+    }
+
+    @Override
+    public Membre findByEmail(String email) {
         String sql = "SELECT * FROM membres WHERE email = ?";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-            stmt.setString(1, email);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToEntity(rs);
-                }
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return mapToMembre(rs);
             }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findByEmail", e);
         }
         return null;
     }
 
     @Override
-    public List<Membre> findActifs() throws SQLException {
+    public List<Membre> findActifs() {
         List<Membre> membres = new ArrayList<>();
         String sql = "SELECT * FROM membres WHERE actif = true";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+
             while (rs.next()) {
-                membres.add(mapResultSetToEntity(rs));
+                membres.add(mapToMembre(rs));
             }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur findActifs", e);
         }
         return membres;
     }
 
-    @Override
-    public void update(Membre membre) throws SQLException {
-        String sql = "UPDATE membres SET nom = ?, prenom = ?, email = ?, actif = ?, date_inscription = ? WHERE id = ?";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-            stmt.setString(1, membre.getNom());
-            stmt.setString(2, membre.getPrenom());
-            stmt.setString(3, membre.getEmail());
-            stmt.setBoolean(4, membre.isActif());
-            stmt.setDate(5, Date.valueOf(membre.getDateInscription()));
-            stmt.setInt(6, membre.getId());
-            stmt.executeUpdate();
-        }
-    }
-
-    @Override
-    public void delete(String id) throws SQLException {
-        try {
-            int idInt = Integer.parseInt(id);
-            String sql = "DELETE FROM membres WHERE id = ?";
-            try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-                stmt.setInt(1, idInt);
-                stmt.executeUpdate();
-            }
-        } catch (NumberFormatException e) {
-            throw new SQLException("ID invalide : " + id);
-        }
-    }
-
-    @Override
-    public boolean existsByEmail(String email) throws SQLException {
-        return findByEmail(email) != null;
+  
+    private Membre mapToMembre(ResultSet rs) throws SQLException {
+        Membre m = new Membre();
+        m.setId(rs.getInt("id"));
+        m.setNom(rs.getString("nom"));
+        m.setEmail(rs.getString("email"));
+        m.setActif(rs.getBoolean("actif"));
+        return m;
     }
 }
