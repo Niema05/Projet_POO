@@ -12,15 +12,16 @@ public class MembreDAOImpl implements MembreDAO {
 
     @Override
     public void save(Membre membre) {
-        String sql = "INSERT INTO membres (nom, email, actif) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO membres (nom,prenom, email, actif) VALUES (?,?,?, ?)";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
 
             ps.setString(1, membre.getNom());
-            ps.setString(2, membre.getEmail());
-            ps.setBoolean(3, membre.isActif());
+            ps.setString(2, membre.getPrenom());
+            ps.setString(3, membre.getEmail());
+            ps.setBoolean(4, membre.isActif());
             ps.executeUpdate();
 
         } catch (SQLException e) {
@@ -70,15 +71,16 @@ public class MembreDAOImpl implements MembreDAO {
 
     @Override
     public void update(Membre membre) {
-        String sql = "UPDATE membres SET nom = ?, email = ?, actif = ? WHERE id = ?";
+        String sql = "UPDATE membres SET nom = ?, prenom = ?, email = ?, actif = ? WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, membre.getNom());
-            ps.setString(2, membre.getEmail());
-            ps.setBoolean(3, membre.isActif());
-            ps.setInt(4, membre.getId());
+            ps.setString(2, membre.getPrenom());
+            ps.setString(3, membre.getEmail());
+            ps.setBoolean(4, membre.isActif());
+            ps.setInt(5, membre.getId());
             ps.executeUpdate();
 
         } catch (SQLException e) {
@@ -140,11 +142,12 @@ public class MembreDAOImpl implements MembreDAO {
         return membres;
     }
 
-  
+    //  Méthode de mapping ResultSet → Membre
     private Membre mapToMembre(ResultSet rs) throws SQLException {
         Membre m = new Membre();
         m.setId(rs.getInt("id"));
         m.setNom(rs.getString("nom"));
+        m.setId(rs.getInt("prenom"));
         m.setEmail(rs.getString("email"));
         m.setActif(rs.getBoolean("actif"));
         return m;
