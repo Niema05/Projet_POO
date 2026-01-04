@@ -1,45 +1,21 @@
-package com.bibliotheque.dao;
+package dao;
 
-import com.bibliotheque.model.Membre;
-import java.sql.SQLException;
+import model.Membre;
 import java.util.List;
 
-/**
- * Interface DAO pour les membres.
- */
-public interface MembreDAO extends DAO<Membre> {
-    /**
-     * Recherche un membre par email.
-     *
-     * @param email l'email du membre
-     * @return le membre trouvé, null sinon
-     * @throws SQLException si une erreur SQL survient
-     */
-    Membre findByEmail(String email) throws SQLException;
+public interface MembreDAO {
 
-    /**
-     * Récupère tous les membres actifs.
-     *
-     * @return une liste de membres actifs
-     * @throws SQLException si une erreur SQL survient
-     */
-    List<Membre> findActifs() throws SQLException;
+    void save(Membre membre);
 
-    /**
-     * Recherche un membre par son ID (int).
-     *
-     * @param id l'identifiant du membre
-     * @return le membre trouvé, null sinon
-     * @throws SQLException si une erreur SQL survient
-     */
-    Membre findByIntId(int id) throws SQLException;
+    Membre findById(int id);
 
-    /**
-     * Vérifie si un email existe déjà dans la base de données.
-     *
-     * @param email l'email à vérifier
-     * @return true si l'email existe, false sinon
-     * @throws SQLException si une erreur SQL survient
-     */
-    boolean existsByEmail(String email) throws SQLException;
+    List<Membre> findAll();
+
+    void update(Membre membre);
+
+    void delete(int id);
+
+    Membre findByEmail(String email);
+
+    List<Membre> findActifs();
 }
