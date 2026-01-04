@@ -4,6 +4,7 @@ public abstract class Document {
 
     protected String isbn;
     protected String titre;
+    protected String id;
 
     public Document(String isbn, String titre) {
         this.isbn = isbn;
