@@ -1,15 +1,25 @@
-package com.biblio.service;
+package com.bibliotheque.service;
 
-import com.biblio.dao.LivreDAO;
-import com.biblio.dao.impl.LivreDAOImpl;
-import com.biblio.exception.LivreIndisponibleException;
-import com.biblio.model.Livre;
+import com.bibliotheque.dao.LivreDAO;
+import com.bibliotheque.dao.impl.LivreDAOImpl;
+import com.bibliotheque.exception.LivreIndisponibleException;
+import com.bibliotheque.model.Livre;
 
 import java.util.List;
 
 public class LivreService {
 
-    private LivreDAO livreDAO = new LivreDAOImpl();
+    private final LivreDAO livreDAO;
+
+    // Default constructor (uses concrete DAO)
+    public LivreService() {
+        this.livreDAO = new LivreDAOImpl();
+    }
+
+    // Constructor for dependency injection / testing
+    public LivreService(LivreDAO livreDAO) {
+        this.livreDAO = livreDAO;
+    }
 
     public void ajouterLivre(Livre livre) {
         livreDAO.save(livre);
