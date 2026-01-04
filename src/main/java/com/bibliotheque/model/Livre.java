@@ -1,7 +1,6 @@
-package com.biblio.model;
+package com.bibliotheque.model;
 
 public class Livre extends Document implements Empruntable {
-    super(isbn, titre);
     private String auteur;
     private boolean disponible = true;
 
@@ -38,4 +37,3 @@ public class Livre extends Document implements Empruntable {
         return jours * 1.5;
     }
 }
-
