@@ -1,4 +1,4 @@
-package com.biblio.model;
+package com.bibliotheque.model;
 
 public abstract class Document {
 
@@ -11,12 +11,26 @@ public abstract class Document {
         this.titre = titre;
     }
 
+    public Document(String id, String isbn, String titre) {
+        this.id = id;
+        this.isbn = isbn;
+        this.titre = titre;
+    }
+
     public String getIsbn() {
         return isbn;
     }
 
     public String getTitre() {
         return titre;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public abstract double calculerPenaliteRetard(int jours);
