@@ -21,14 +21,9 @@ public abstract class Document {
 
     public abstract double calculerPenaliteRetard(int jours);
 
-    /**
-     * Calcule la pénalité de retard pour un magazine.
-     * Pénalité : 1 DH par jour de retard.
-     *
-     * @return la pénalité en DH
-     */
+  
     public double calculerPenaliteRetard() {
-        // TODO Auto-generated method stub
+   
         throw new UnsupportedOperationException("Unimplemented method 'calculerPenaliteRetard'");
     }
 }
