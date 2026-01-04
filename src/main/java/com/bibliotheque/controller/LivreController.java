@@ -2,6 +2,7 @@ package com.biblio.controller;
 
 import com.biblio.model.Livre;
 import com.biblio.service.LivreService;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableView;
 
@@ -14,6 +15,13 @@ public class LivreController {
 
     @FXML
     public void initialize() {
-        tableLivres.getItems().addAll(service.listerLivres());
+        rafraichirTable();
+    }
+
+    @FXML
+    public void rafraichirTable() {
+        tableLivres.setItems(
+            FXCollections.observableArrayList(service.listerLivres())
+        );
     }
 }
