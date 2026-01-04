@@ -6,6 +6,7 @@ import model.Membre;
 import service.BibliothequeService;
 
 import java.util.List;
+import java.util.Optional;
 
 public class MembreController {
 
