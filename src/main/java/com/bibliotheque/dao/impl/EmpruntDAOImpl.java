@@ -1,4 +1,10 @@
 package com.bibliotheque.dao.impl;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.bibliotheque.dao.EmpruntDAO;
 import com.bibliotheque.dao.LivreDAO;
@@ -7,201 +13,126 @@ import com.bibliotheque.model.Emprunt;
 import com.bibliotheque.model.Livre;
 import com.bibliotheque.model.Membre;
 import com.bibliotheque.util.DatabaseConnection;
-
-import java.sql.*;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Implémentation DAO pour les emprunts avec MySQL.
- */
-public class EmpruntDAOImpl implements EmpruntDAO {
-
-    private final LivreDAO livreDAO;
-    private final MembreDAO membreDAO;
-
-    /**
-     * Constructeur avec injection des dépendances.
-     *
-     * @param livreDAO   le DAO des livres
-     * @param membreDAO  le DAO des membres
-     */
-    public EmpruntDAOImpl(LivreDAO livreDAO, MembreDAO membreDAO) {
-        this.livreDAO = livreDAO;
-        this.membreDAO = membreDAO;
+public class EmpruntDAOImpl implements EmpruntDAO  {
+        private Emprunt ToEmprunt(ResultSet result) throws SQLException {
+        LivreDAO livreDAO = new LivreDAOImpl();
+        Livre livre = livreDAO.findByISBN(result.getString("isbn"));
+        MembreDAO membreDAO = new MembreDAOImpl();
+        Membre membre = membreDAO.findByIntId(result.getInt("membre_id")) ;
+        return new Emprunt(result.getInt("id"),
+                           result.getDate("dateEmprunt").toLocalDate(),
+                           result.getDate("dateRetourPrevue").toLocalDate(), 
+                           result.getDate("dateRetoureffective").toLocalDate(), 
+                           livre, 
+                           membre, 
+                           result.getDouble("penalite"));
     }
 
-    /**
-     * Mappe un ResultSet à un objet Emprunt.
-     *
-     * @param rs le ResultSet
-     * @return l'objet Emprunt
-     * @throws SQLException si une erreur SQL survient
-     */
-    private Emprunt mapResultSetToEntity(ResultSet rs) throws SQLException {
-        Livre livre = livreDAO.findByISBN(rs.getString("isbn"));
-        Membre membre = membreDAO.findByIntId(rs.getInt("membre_id"));
-
-        LocalDate dateRetourEffective = null;
-        Date dateRetourEffectiveSQL = rs.getDate("date_retour_effective");
-        if (dateRetourEffectiveSQL != null) {
-            dateRetourEffective = dateRetourEffectiveSQL.toLocalDate();
-        }
-
-        return new Emprunt(
-                rs.getInt("id"),
-                rs.getDate("date_emprunt").toLocalDate(),
-                rs.getDate("date_retour_prevue").toLocalDate(),
-                dateRetourEffective,
-                rs.getDouble("penalite"),
-                livre,
-                membre
-        );
-    }
-
-    @Override
-    public void save(Emprunt emprunt) throws SQLException {
-        String sql = "INSERT INTO emprunts (isbn, membre_id, date_emprunt, date_retour_prevue, date_retour_effective, penalite) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+    @Override 
+    
+    public void save(Emprunt emprunt) throws SQLException{
+        String sql = "INSERT INTO emprunts (id, isbn , membre_id , date_emprunt , date_retour_prevue , date_retour_effective , penalite) VALUES (?, ?, ?, ?, ?, ? , ?)";
         try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-            stmt.setString(1, emprunt.getLivre().getIsbn());
-            stmt.setInt(2, emprunt.getMembre().getId());
-            stmt.setDate(3, Date.valueOf(emprunt.getDateEmprunt()));
-            stmt.setDate(4, Date.valueOf(emprunt.getDateRetourPrevue()));
-
-            if (emprunt.getDateRetourEffective() != null) {
-                stmt.setDate(5, Date.valueOf(emprunt.getDateRetourEffective()));
-            } else {
-                stmt.setNull(5, Types.DATE);
-            }
-
-            stmt.setDouble(6, emprunt.getPenalite());
+            stmt.setInt(1, emprunt.getId());
+            stmt.setString(2, emprunt.getLivre().getIsbn());
+            stmt.setInt(3, emprunt.getMembre().getId());
+            stmt.setDate(4, Date.valueOf(emprunt.getDateEmprunt()));
+            stmt.setDate(5, Date.valueOf(emprunt.getdateRetourPrevue()));
+            stmt.setDate(6, Date.valueOf(emprunt.getdateRetourEffective()));
+            stmt.setDouble(7, emprunt.getPenalite());
             stmt.executeUpdate();
         }
     }
-
     @Override
-    public Emprunt findById(String id) throws SQLException {
-        try {
-            int idInt = Integer.parseInt(id);
-            String sql = "SELECT * FROM emprunts WHERE id = ?";
-            try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-                stmt.setInt(1, idInt);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        return mapResultSetToEntity(rs);
-                    }
+    public Emprunt findById(int id) throws SQLException{
+        String sql = "SELECT * FROM emprunts WHERE id = ?" ;
+        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            ResultSet result = stmt.executeQuery();
+                if (result.next()){
+                    return ToEmprunt(result);
                 }
-            }
-        } catch (NumberFormatException e) {
-            throw new SQLException("ID invalide : " + id);
         }
         return null;
-    }
 
+    }
     @Override
     public List<Emprunt> findAll() throws SQLException {
-        List<Emprunt> emprunts = new ArrayList<>();
-        String sql = "SELECT * FROM emprunts";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                emprunts.add(mapResultSetToEntity(rs));
+        List<Emprunt> ListEmprunt = new ArrayList<>();
+        String sql = "SELECT * FROM empeunts " ; 
+         try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)){
+            ResultSet result = stmt.executeQuery();
+            while(result.next()){
+                Emprunt emprunt = ToEmprunt(result);
+                ListEmprunt.add(emprunt);
             }
-        }
-        return emprunts;
+            return ListEmprunt ; 
+         }
     }
-
-    @Override
-    public List<Emprunt> findByMembre(int membreId) throws SQLException {
-        List<Emprunt> emprunts = new ArrayList<>();
-        String sql = "SELECT * FROM emprunts WHERE membre_id = ?";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-            stmt.setInt(1, membreId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    emprunts.add(mapResultSetToEntity(rs));
-                }
-            }
-        }
-        return emprunts;
-    }
-
-    @Override
-    public List<Emprunt> findEnCours() throws SQLException {
-        List<Emprunt> emprunts = new ArrayList<>();
-        String sql = "SELECT * FROM emprunts WHERE date_retour_effective IS NULL";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                emprunts.add(mapResultSetToEntity(rs));
-            }
-        }
-        return emprunts;
-    }
-
-    @Override
-    public List<Emprunt> findEnRetard() throws SQLException {
-        List<Emprunt> emprunts = new ArrayList<>();
-        String sql = "SELECT * FROM emprunts WHERE date_retour_effective > date_retour_prevue " +
-                "OR (date_retour_effective IS NULL AND date_retour_prevue < CURDATE())";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                emprunts.add(mapResultSetToEntity(rs));
-            }
-        }
-        return emprunts;
-    }
-
-    @Override
-    public int countEmpruntsEnCours(int membreId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM emprunts WHERE membre_id = ? AND date_retour_effective IS NULL";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-            stmt.setInt(1, membreId);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-            }
-        }
-        return 0;
-    }
-
-    @Override
+    @Override 
     public void update(Emprunt emprunt) throws SQLException {
-        String sql = "UPDATE emprunts SET isbn = ?, membre_id = ?, date_emprunt = ?, date_retour_prevue = ?, " +
-                "date_retour_effective = ?, penalite = ? WHERE id = ?";
-        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-            stmt.setString(1, emprunt.getLivre().getIsbn());
-            stmt.setInt(2, emprunt.getMembre().getId());
-            stmt.setDate(3, Date.valueOf(emprunt.getDateEmprunt()));
-            stmt.setDate(4, Date.valueOf(emprunt.getDateRetourPrevue()));
-
-            if (emprunt.getDateRetourEffective() != null) {
-                stmt.setDate(5, Date.valueOf(emprunt.getDateRetourEffective()));
-            } else {
-                stmt.setNull(5, Types.DATE);
-            }
-
-            stmt.setDouble(6, emprunt.getPenalite());
-            stmt.setInt(7, emprunt.getId());
+        String sql = "UPDATE emprunts SET id = ? ,  membre_id = ? , date_emprunt = ? , date_retour_prevue = ?, date_retour_effective = ?, penalite = ?" ; 
+        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)){
+            stmt.setInt(1, emprunt.getId());
+            stmt.setString(2, emprunt.getLivre().getIsbn());
+            stmt.setInt(3, emprunt.getMembre().getId());
+            stmt.setDate(4, Date.valueOf(emprunt.getDateEmprunt()));
+            stmt.setDate(5, Date.valueOf(emprunt.getdateRetourPrevue()));
+            stmt.setDate(6, Date.valueOf(emprunt.getdateRetourEffective()));
+            stmt.setDouble(7, emprunt.getPenalite());
             stmt.executeUpdate();
         }
     }
-
     @Override
-    public void delete(String id) throws SQLException {
-        try {
-            int idInt = Integer.parseInt(id);
-            String sql = "DELETE FROM emprunts WHERE id = ?";
-            try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
-                stmt.setInt(1, idInt);
-                stmt.executeUpdate();
-            }
-        } catch (NumberFormatException e) {
-            throw new SQLException("ID invalide : " + id);
+    public List<Emprunt> findByMember(Membre member) throws SQLException{
+        String sql = "SELECT * FROM emprunts WHERE member_id = ?" ;
+        List<Emprunt> ListEmprunt = new ArrayList<>();
+        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+            stmt.setInt(1, member.getId());
+            ResultSet result = stmt.executeQuery();
+                while(result.next()){
+                    Emprunt emprunt = ToEmprunt(result);
+                    ListEmprunt.add(emprunt);
+
+                   
+                }
+            return ListEmprunt;
         }
     }
+    @Override
+    public List<Emprunt> findEnCours() throws SQLException{
+        List<Emprunt> ListEmprunt = new ArrayList<>();
+        String sql = "SELECT * FROM emprunts where date_retour_effective IS NULL " ;
+        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+            ResultSet result = stmt.executeQuery();
+                while(result.next()){
+                    Emprunt emprunt = ToEmprunt(result);
+                    ListEmprunt.add(emprunt);
+
+                   
+                }
+            return ListEmprunt;
+        }
+
+    }
+    @Override
+    public int countEmpruntEnCours(Membre member) throws SQLException{
+        List<Emprunt> ListEmprunt = new ArrayList<>();
+        String sql = "SELECT * FROM emprunts where date_retour_effective IS NULL AND membre_id = ? " ;
+        int count = 0 ;
+        try (PreparedStatement stmt = DatabaseConnection.getInstance().getConnection().prepareStatement(sql)) {
+            ResultSet result = stmt.executeQuery();
+            stmt.setInt(1, member.getId());
+                while(result.next()){
+                    Emprunt emprunt = ToEmprunt(result);
+                    ListEmprunt.add(emprunt);
+                    count ++ ;
+                }
+            return count;
+        }
+
+    }
+
+    
+
 }
