@@ -1,4 +1,4 @@
-package com.biblio.model;
+package com.bibliotheque.model;
 
 public interface Empruntable {
 
