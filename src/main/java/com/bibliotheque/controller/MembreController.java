@@ -1,205 +1,145 @@
-package com.bibliotheque.controller;
+package controller;
 
-import com.bibliotheque.exception.ValidationException;
-import com.bibliotheque.model.Membre;
-import com.bibliotheque.service.BibliothequeService;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import model.Membre;
+import service.BibliothequeService;
 
-import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Contrôleur pour la gestion des membres.
- */
 public class MembreController {
 
-    @FXML
-    private TableView<Membre> tableViewMembres;
-    @FXML
-    private TableColumn<Membre, Integer> colId;
-    @FXML
-    private TableColumn<Membre, String> colNom;
-    @FXML
-    private TableColumn<Membre, String> colPrenom;
-    @FXML
-    private TableColumn<Membre, String> colEmail;
-    @FXML
-    private TableColumn<Membre, Boolean> colActif;
-    @FXML
-    private TableColumn<Membre, LocalDate> colDateInscription;
+    private final BibliothequeService service = new BibliothequeService();
+
+    /* ============================
+       Champs JavaFX (FXML)
+       ============================ */
 
     @FXML
-    private TextField tfNom;
-    @FXML
-    private TextField tfPrenom;
-    @FXML
-    private TextField tfEmail;
-    @FXML
-    private CheckBox cbActif;
+    private TextField txtId;
 
     @FXML
-    private TextField tfRecherche;
-    @FXML
-    private Button btnAjouter;
-    @FXML
-    private Button btnModifier;
-    @FXML
-    private Button btnSupprimer;
-    @FXML
-    private Button btnRechercher;
+    private TextField txtNom;
 
-    private BibliothequeService service;
+    @FXML
+    private TextField txtPrenom;
 
-    /**
-     * Définit le service.
-     *
-     * @param service le service de bibliothèque
-     */
-    public void setService(BibliothequeService service) {
-        this.service = service;
-        chargerMembres();
-    }
+    @FXML
+    private TextField txtEmail;
 
-    /**
-     * Charge tous les membres dans le tableau.
-     */
-    private void chargerMembres() {
-        try {
-            List<Membre> membres = service.getTousLesMembres();
-            ObservableList<Membre> data = FXCollections.observableArrayList(membres);
-            tableViewMembres.setItems(data);
-        } catch (SQLException e) {
-            afficherErreur("Erreur de chargement", "Impossible de charger les membres : " + e.getMessage());
-        }
-    }
+    @FXML
+    private CheckBox chkActif;
 
-    /**
-     * Ajoute un nouveau membre.
-     */
+    @FXML
+    private TableView<Membre> tableMembres;
+
+    @FXML
+    private Label lblMessage;
+
+    /* ============================
+       Ajouter un membre
+       ============================ */
     @FXML
     public void handleAjouter() {
         try {
-            String nom = tfNom.getText();
-            String prenom = tfPrenom.getText();
-            String email = tfEmail.getText();
-            boolean actif = cbActif.isSelected();
+            Membre membre = new Membre();
+            membre.setNom(txtNom.getText());
+            membre.setPrenom(txtPrenom.getText());
+            membre.setEmail(txtEmail.getText());
 
-            Membre membre = new Membre(nom, prenom, email, actif, LocalDate.now());
             service.ajouterMembre(membre);
 
-            afficherSucces("Succès", "Membre ajouté avec succès!");
-            nettoyerFormulaire();
-            chargerMembres();
-        } catch (ValidationException e) {
-            afficherErreur("Erreur de validation", e.getMessage());
-        } catch (SQLException e) {
-            afficherErreur("Erreur de base de données", e.getMessage());
+            lblMessage.setText("Membre ajouté avec succès");
+            rafraichirTable();
+
+        } catch (Exception e) {
+            lblMessage.setText(e.getMessage());
         }
     }
 
-    /**
-     * Modifie le membre sélectionné.
-     */
+    /* ============================
+       Modifier un membre
+       ============================ */
     @FXML
     public void handleModifier() {
-        Membre selected = tableViewMembres.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            afficherErreur("Erreur", "Veuillez sélectionner un membre");
-            return;
-        }
-
         try {
-            selected.setNom(tfNom.getText());
-            selected.setPrenom(tfPrenom.getText());
-            selected.setEmail(tfEmail.getText());
-            selected.setActif(cbActif.isSelected());
+            int id = Integer.parseInt(txtId.getText());
 
-            service.modifierMembre(selected);
+            Membre membre = new Membre();
+            membre.setId(id);
+            membre.setNom(txtNom.getText());
+            membre.setPrenom(txtPrenom.getText());
+            membre.setEmail(txtEmail.getText());
+            membre.setActif(chkActif.isSelected());
 
-            afficherSucces("Succès", "Membre modifié avec succès!");
-            nettoyerFormulaire();
-            chargerMembres();
-        } catch (ValidationException e) {
-            afficherErreur("Erreur de validation", e.getMessage());
-        } catch (SQLException e) {
-            afficherErreur("Erreur de base de données", e.getMessage());
+            service.modifierMembre(membre);
+
+            lblMessage.setText("Membre modifié avec succès");
+            rafraichirTable();
+
+        } catch (Exception e) {
+            lblMessage.setText(e.getMessage());
         }
     }
 
-    /**
-     * Supprime le membre sélectionné.
-     */
+    /* ============================
+       Activer / Désactiver
+       ============================ */
     @FXML
-    public void handleSupprimer() {
-        Membre selected = tableViewMembres.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            afficherErreur("Erreur", "Veuillez sélectionner un membre");
-            return;
-        }
-
+    public void handleActiverDesactiver() {
         try {
-            // Dans une vraie application, on pourrait avoir une méthode supprimant le membre
-            // Pour l'instant, on le désactive
-            service.activerDesactiverMembre(selected.getId(), false);
-            afficherSucces("Succès", "Membre désactivé avec succès!");
-            nettoyerFormulaire();
-            chargerMembres();
-        } catch (SQLException e) {
-            afficherErreur("Erreur de base de données", e.getMessage());
+            int id = Integer.parseInt(txtId.getText());
+            boolean actif = chkActif.isSelected();
+
+            service.activerDesactiver(id, actif);
+
+            lblMessage.setText("Statut du membre mis à jour");
+            rafraichirTable();
+
+        } catch (Exception e) {
+            lblMessage.setText(e.getMessage());
         }
     }
 
-    /**
-     * Recherche des membres.
-     */
+    /* ============================
+       Afficher tous les membres
+       ============================ */
     @FXML
-    public void handleRechercher() {
-        String critere = tfRecherche.getText();
-        if (critere.isEmpty()) {
-            chargerMembres();
-            return;
-        }
+    public void handleAfficherTous() {
+        List<Membre> membres = service.rechercherMembres();
+        tableMembres.getItems().setAll(membres);
+    }
 
+    /* ============================
+       Afficher membres actifs
+       ============================ */
+    @FXML
+    public void handleAfficherActifs() {
+        List<Membre> membres = service.rechercherMembresActifs();
+        tableMembres.getItems().setAll(membres);
+    }
+
+    /* ============================
+       Historique des emprunts
+       ============================ */
+    @FXML
+    public void handleAfficherHistorique() {
         try {
-            List<Membre> membres = service.rechercherMembres(critere);
-            ObservableList<Membre> data = FXCollections.observableArrayList(membres);
-            tableViewMembres.setItems(data);
-        } catch (SQLException e) {
-            afficherErreur("Erreur de recherche", e.getMessage());
+            int id = Integer.parseInt(txtId.getText());
+            service.getHistorique(id);
+
+            lblMessage.setText("Affichage de l'historique en cours de développement");
+
+        } catch (Exception e) {
+            lblMessage.setText(e.getMessage());
         }
     }
 
-    /**
-     * Nettoie le formulaire.
-     */
-    private void nettoyerFormulaire() {
-        tfNom.clear();
-        tfPrenom.clear();
-        tfEmail.clear();
-        cbActif.setSelected(true);
-    }
-
-    /**
-     * Affiche une alerte d'erreur.
-     */
-    private void afficherErreur(String titre, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(titre);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    /**
-     * Affiche une alerte de succès.
-     */
-    private void afficherSucces(String titre, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(titre);
-        alert.setContentText(message);
-        alert.showAndWait();
+    /* ============================
+       Méthode utilitaire
+       ============================ */
+    private void rafraichirTable() {
+        tableMembres.getItems().setAll(service.rechercherMembres());
     }
 }
+
