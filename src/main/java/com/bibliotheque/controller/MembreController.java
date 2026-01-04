@@ -1,23 +1,40 @@
 package controller;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import model.Membre;
 import service.BibliothequeService;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Controller pour la gestion des membres (CRUD + activation + historique)
+ */
 public class MembreController {
 
-    private final BibliothequeService service = new BibliothequeService();
-
-    /* ============================
-       Champs JavaFX (FXML)
-       ============================ */
+    /* ==================== COMPOSANTS FXML ==================== */
 
     @FXML
-    private TextField txtId;
+    private TableView<Membre> tableMembres;
+
+    @FXML
+    private TableColumn<Membre, Integer> colId;
+
+    @FXML
+    private TableColumn<Membre, String> colNom;
+
+    @FXML
+    private TableColumn<Membre, String> colPrenom;
+
+    @FXML
+    private TableColumn<Membre, String> colEmail;
+
+    @FXML
+    private TableColumn<Membre, Boolean> colActif;
 
     @FXML
     private TextField txtNom;
@@ -32,115 +49,235 @@ public class MembreController {
     private CheckBox chkActif;
 
     @FXML
-    private TableView<Membre> tableMembres;
+    private TextField txtRecherche;
 
     @FXML
-    private Label lblMessage;
+    private Button btnModifier, btnSupprimer, btnActiver, btnDesactiver, btnHistorique;
 
-    /* ============================
-       Ajouter un membre
-       ============================ */
     @FXML
-    public void handleAjouter() {
+    private Label lblStatistiques;
+
+    /* ==================== ATTRIBUTS ==================== */
+
+    private BibliothequeService service;
+    private ObservableList<Membre> listeMembres;
+    private Membre membreSelectionne;
+
+    /* ==================== INITIALISATION ==================== */
+
+    @FXML
+    public void initialize() {
+        service = new BibliothequeService();
+        listeMembres = FXCollections.observableArrayList();
+
+        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
+        colNom.setCellValueFactory(new PropertyValueFactory<>("nom"));
+        colPrenom.setCellValueFactory(new PropertyValueFactory<>("prenom"));
+        colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
+        colActif.setCellValueFactory(new PropertyValueFactory<>("actif"));
+
+        colActif.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Boolean actif, boolean empty) {
+                super.updateItem(actif, empty);
+                if (empty || actif == null) {
+                    setText(null);
+                } else {
+                    setText(actif ? "Oui" : "Non");
+                    setStyle(actif ? "-fx-text-fill: green;" : "-fx-text-fill: red;");
+                }
+            }
+        });
+
+        tableMembres.setItems(listeMembres);
+
+        tableMembres.getSelectionModel().selectedItemProperty()
+                .addListener((obs, oldVal, newVal) -> onMembreSelected(newVal));
+
+        chargerMembres();
+        afficherStatistiques();
+        desactiverBoutons();
+    }
+
+    /* ==================== CRUD ==================== */
+
+    @FXML
+    private void handleAjouter() {
         try {
-            Membre membre = new Membre();
-            membre.setNom(txtNom.getText());
-            membre.setPrenom(txtPrenom.getText());
-            membre.setEmail(txtEmail.getText());
+            Membre membre = new Membre(
+                    txtNom.getText().trim(),
+                    txtPrenom.getText().trim(),
+                    txtEmail.getText().trim(),
+                    true
+            );
 
             service.ajouterMembre(membre);
-
-            lblMessage.setText("Membre ajouté avec succès");
-            rafraichirTable();
+            afficherSucces("Membre ajouté avec succès");
+            chargerMembres();
+            viderFormulaire();
+            afficherStatistiques();
 
         } catch (Exception e) {
-            lblMessage.setText(e.getMessage());
+            afficherErreur(e.getMessage());
         }
     }
 
-    /* ============================
-       Modifier un membre
-       ============================ */
     @FXML
-    public void handleModifier() {
+    private void handleModifier() {
+        if (membreSelectionne == null) {
+            afficherAvertissement("Sélectionnez un membre");
+            return;
+        }
+
         try {
-            int id = Integer.parseInt(txtId.getText());
+            membreSelectionne.setNom(txtNom.getText().trim());
+            membreSelectionne.setPrenom(txtPrenom.getText().trim());
+            membreSelectionne.setEmail(txtEmail.getText().trim());
+            membreSelectionne.setActif(chkActif.isSelected());
 
-            Membre membre = new Membre();
-            membre.setId(id);
-            membre.setNom(txtNom.getText());
-            membre.setPrenom(txtPrenom.getText());
-            membre.setEmail(txtEmail.getText());
-            membre.setActif(chkActif.isSelected());
-
-            service.modifierMembre(membre);
-
-            lblMessage.setText("Membre modifié avec succès");
-            rafraichirTable();
+            service.modifierMembre(membreSelectionne);
+            afficherSucces("Membre modifié");
+            chargerMembres();
 
         } catch (Exception e) {
-            lblMessage.setText(e.getMessage());
+            afficherErreur(e.getMessage());
         }
     }
 
-    /* ============================
-       Activer / Désactiver
-       ============================ */
     @FXML
-    public void handleActiverDesactiver() {
-        try {
-            int id = Integer.parseInt(txtId.getText());
-            boolean actif = chkActif.isSelected();
+    private void handleSupprimer() {
+        if (membreSelectionne == null) {
+            afficherAvertissement("Sélectionnez un membre");
+            return;
+        }
 
-            service.activerDesactiver(id, actif);
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setHeaderText("Confirmer la suppression");
 
-            lblMessage.setText("Statut du membre mis à jour");
-            rafraichirTable();
-
-        } catch (Exception e) {
-            lblMessage.setText(e.getMessage());
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            service.supprimerMembre(membreSelectionne.getId());
+            afficherSucces("Membre supprimé");
+            chargerMembres();
+            viderFormulaire();
+            afficherStatistiques();
         }
     }
 
-    /* ============================
-       Afficher tous les membres
-       ============================ */
+    /* ==================== ACTIVATION ==================== */
+
     @FXML
-    public void handleAfficherTous() {
-        List<Membre> membres = service.rechercherMembres();
-        tableMembres.getItems().setAll(membres);
+    private void handleActiver() {
+        changerStatut(true);
     }
 
-    /* ============================
-       Afficher membres actifs
-       ============================ */
     @FXML
-    public void handleAfficherActifs() {
-        List<Membre> membres = service.rechercherMembresActifs();
-        tableMembres.getItems().setAll(membres);
+    private void handleDesactiver() {
+        changerStatut(false);
     }
 
-    /* ============================
-       Historique des emprunts
-       ============================ */
+    private void changerStatut(boolean actif) {
+        if (membreSelectionne == null) {
+            afficherAvertissement("Sélectionnez un membre");
+            return;
+        }
+
+        service.activerDesactiver(membreSelectionne.getId(), actif);
+        afficherSucces("Statut mis à jour");
+        chargerMembres();
+        afficherStatistiques();
+    }
+
+    /* ==================== HISTORIQUE ==================== */
+
     @FXML
-    public void handleAfficherHistorique() {
-        try {
-            int id = Integer.parseInt(txtId.getText());
-            service.getHistorique(id);
+    private void handleHistorique() {
+        if (membreSelectionne == null) {
+            afficherAvertissement("Sélectionnez un membre");
+            return;
+        }
 
-            lblMessage.setText("Affichage de l'historique en cours de développement");
+        service.getHistorique(membreSelectionne.getId());
 
-        } catch (Exception e) {
-            lblMessage.setText(e.getMessage());
+        Alert info = new Alert(Alert.AlertType.INFORMATION);
+        info.setHeaderText("Historique des emprunts");
+        info.setContentText("Fonctionnalité à compléter avec EmpruntService");
+        info.showAndWait();
+    }
+
+    /* ==================== RECHERCHE ==================== */
+
+    @FXML
+    private void handleRechercher() {
+        String motCle = txtRecherche.getText();
+
+        if (motCle == null || motCle.isBlank()) {
+            chargerMembres();
+            return;
+        }
+
+        listeMembres.setAll(service.rechercherMembres(motCle));
+    }
+
+    /* ==================== UTILITAIRES ==================== */
+
+    private void chargerMembres() {
+        listeMembres.setAll(service.rechercherMembres());
+    }
+
+    private void onMembreSelected(Membre membre) {
+        membreSelectionne = membre;
+
+        if (membre != null) {
+            txtNom.setText(membre.getNom());
+            txtPrenom.setText(membre.getPrenom());
+            txtEmail.setText(membre.getEmail());
+            chkActif.setSelected(membre.isActif());
+            activerBoutons();
         }
     }
 
-    /* ============================
-       Méthode utilitaire
-       ============================ */
-    private void rafraichirTable() {
-        tableMembres.getItems().setAll(service.rechercherMembres());
+    private void viderFormulaire() {
+        txtNom.clear();
+        txtPrenom.clear();
+        txtEmail.clear();
+        chkActif.setSelected(true);
+        tableMembres.getSelectionModel().clearSelection();
+        desactiverBoutons();
+    }
+
+    private void afficherStatistiques() {
+        lblStatistiques.setText(service.getStatistiquesMembres());
+    }
+
+    private void activerBoutons() {
+        btnModifier.setDisable(false);
+        btnSupprimer.setDisable(false);
+        btnActiver.setDisable(false);
+        btnDesactiver.setDisable(false);
+        btnHistorique.setDisable(false);
+    }
+
+    private void desactiverBoutons() {
+        btnModifier.setDisable(true);
+        btnSupprimer.setDisable(true);
+        btnActiver.setDisable(true);
+        btnDesactiver.setDisable(true);
+        btnHistorique.setDisable(true);
+    }
+
+    /* ==================== ALERTES ==================== */
+
+    private void afficherSucces(String msg) {
+        new Alert(Alert.AlertType.INFORMATION, msg).showAndWait();
+    }
+
+    private void afficherErreur(String msg) {
+        new Alert(Alert.AlertType.ERROR, msg).showAndWait();
+    }
+
+    private void afficherAvertissement(String msg) {
+        new Alert(Alert.AlertType.WARNING, msg).showAndWait();
     }
 }
 
