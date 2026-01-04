@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
+    fx:controller="com.bibliotheque.controller.EmpruntController" spacing="10" style="-fx-padding: 10;">
+    
+    <!-- Formulaire d'emprunt -->
+    <TitledPane text="Nouvel Emprunt" collapsible="false">
+        <GridPane hgap="10" vgap="10" style="-fx-padding: 10;">
+            <Label text="Livre:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <ComboBox fx:id="comboLivres" GridPane.columnIndex="1" GridPane.rowIndex="0" prefWidth="300"/>
+            
+            <Label text="Membre:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <ComboBox fx:id="comboMembres" GridPane.columnIndex="1" GridPane.rowIndex="1" prefWidth="300"/>
+            
+            <HBox spacing="10" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="2">
+                <Button fx:id="btnEmprunter" text="Emprunter" onAction="#handleEmprunter" style="-fx-padding: 8;"/>
+                <Button fx:id="btnRetourner" text="Retourner" onAction="#handleRetourner" style="-fx-padding: 8;"/>
+            </HBox>
+        </GridPane>
+    </TitledPane>
+    
+    <!-- Boutons de filtre -->
+    <HBox spacing="10">
+        <Label text="Filtres:"/>
+        <Button fx:id="btnAfficherTous" text="Tous les emprunts" onAction="#handleAfficherTous" style="-fx-padding: 8;"/>
+        <Button fx:id="btnAfficherEnCours" text="En cours" onAction="#handleAfficherEnCours" style="-fx-padding: 8;"/>
+        <Button fx:id="btnAfficherEnRetard" text="En retard" onAction="#handleAfficherEnRetard" style="-fx-padding: 8;"/>
+    </HBox>
+    
+    <!-- Tableau des emprunts -->
+    <Label text="Liste des Emprunts" style="-fx-font-weight: bold; -fx-font-size: 12;"/>
+    <TableView fx:id="tableViewEmprunts" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colId" text="ID" prefWidth="50" />
+            <TableColumn fx:id="colLivre" text="Livre" prefWidth="200" />
+            <TableColumn fx:id="colMembre" text="Membre" prefWidth="150" />
+            <TableColumn fx:id="colDateEmprunt" text="Date d'emprunt" prefWidth="130" />
+            <TableColumn fx:id="colDateRetourPrevue" text="Retour prévu" prefWidth="130" />
+            <TableColumn fx:id="colDateRetourEffective" text="Retour effectif" prefWidth="130" />
+            <TableColumn fx:id="colPenalite" text="Pénalité (DH)" prefWidth="100" />
+        </columns>
+    </TableView>
+</VBox>

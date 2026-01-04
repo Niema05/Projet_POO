@@ -1,0 +1,27 @@
+package com.bibliotheque.controller;
+
+import com.bibliotheque.model.Livre;
+import com.bibliotheque.service.LivreService;
+import javafx.collections.FXCollections;
+import javafx.fxml.FXML;
+import javafx.scene.control.TableView;
+
+public class LivreController {
+
+    @FXML
+    private TableView<Livre> tableLivres;
+
+    private LivreService service = new LivreService();
+
+    @FXML
+    public void initialize() {
+        rafraichirTable();
+    }
+
+    @FXML
+    public void rafraichirTable() {
+        tableLivres.setItems(
+            FXCollections.observableArrayList(service.listerLivres())
+        );
+    }
+}
