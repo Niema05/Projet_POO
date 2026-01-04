@@ -1,6 +1,6 @@
-package com.biblio.dao;
+package com.bibliotheque.dao;
 
-import com.biblio.model.Livre;
+import com.bibliotheque.model.Livre;
 import java.util.List;
 
 public interface LivreDAO {
@@ -11,4 +11,3 @@ public interface LivreDAO {
     void update(Livre livre);
     void delete(String isbn);
 }
-
