@@ -94,23 +94,23 @@ src/main/java/com/bibliotheque/
 ## Fonctionnalités
 
 ### Gestion des Livres
-- ✅ Ajouter/Modifier/Supprimer des livres
-- ✅ Rechercher des livres par titre ou auteur
-- ✅ Afficher la disponibilité des livres
-- ✅ Validation des données (ISBN, titre, année)
+-  Ajouter/Modifier/Supprimer des livres
+-  Rechercher des livres par titre ou auteur
+-  Afficher la disponibilité des livres
+-  Validation des données (ISBN, titre, année)
 
 ### Gestion des Membres
-- ✅ Ajouter/Modifier/Désactiver des membres
-- ✅ Rechercher des membres
-- ✅ Gestion du statut actif/inactif
-- ✅ Validation des emails
+-  Ajouter/Modifier/Désactiver des membres
+-  Rechercher des membres
+-  Gestion du statut actif/inactif
+-  Validation des emails
 
 ### Gestion des Emprunts
-- ✅ Emprunter un livre (max 3 emprunts par membre)
-- ✅ Retourner un livre
-- ✅ Calculer les pénalités de retard
-- ✅ Afficher les emprunts en cours ou en retard
-- ✅ Historique des emprunts par membre
+-  Emprunter un livre (max 3 emprunts par membre)
+-  Retourner un livre
+-  Calculer les pénalités de retard
+-  Afficher les emprunts en cours ou en retard
+-  Historique des emprunts par membre
 
 ##  Règles Métier
 
