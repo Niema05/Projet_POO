@@ -2,7 +2,7 @@
 
 Un système complet de gestion de bibliothèque développé en Java avec JavaFX et MySQL.
 
-## 🏗️ Architecture
+##  Architecture
 
 Le projet suit une **architecture en couches stricte** :
 
@@ -11,7 +11,7 @@ Le projet suit une **architecture en couches stricte** :
 - **Couche Service** : Logique métier et validations
 - **Couche Contrôleur** : Interface JavaFX
 
-## 📦 Structure du Projet
+##  Structure du Projet
 
 ```
 src/main/java/com/bibliotheque/
@@ -58,7 +58,7 @@ src/main/java/com/bibliotheque/
 └── Main.java
 ```
 
-## 🚀 Installation et Configuration
+##  Installation et Configuration
 
 ### Prérequis
 - Java 17+
@@ -91,7 +91,7 @@ src/main/java/com/bibliotheque/
    mvn javafx:run
    ```
 
-## 📋 Fonctionnalités
+## Fonctionnalités
 
 ### Gestion des Livres
 - ✅ Ajouter/Modifier/Supprimer des livres
@@ -112,7 +112,7 @@ src/main/java/com/bibliotheque/
 - ✅ Afficher les emprunts en cours ou en retard
 - ✅ Historique des emprunts par membre
 
-## 🎯 Règles Métier
+##  Règles Métier
 
 ### Emprunt d'un livre
 - Vérifier que le membre est **actif**
@@ -124,7 +124,7 @@ src/main/java/com/bibliotheque/
 - Livre : **2 DH par jour** de retard
 - Magazine : **1 DH par jour** de retard
 
-## 🗄️ Schéma de Base de Données
+##  Schéma de Base de Données
 
 ### Table `livres`
 ```sql
@@ -159,7 +159,7 @@ FOREIGN KEY (isbn) REFERENCES livres(isbn)
 FOREIGN KEY (membre_id) REFERENCES membres(id)
 ```
 
-## 📚 Dépendances
+##  Dépendances
 
 - **JavaFX** 21 : Interface graphique
 - **MySQL Connector** 8.0.33 : Connecteur MySQL
@@ -168,21 +168,21 @@ FOREIGN KEY (membre_id) REFERENCES membres(id)
 
 ## 🎓 Concepts POO Utilisés
 
-- ✅ **Héritage** : Document, Personne
-- ✅ **Polymorphisme** : Empruntable interface
-- ✅ **Encapsulation** : Attributs private avec getters/setters
-- ✅ **Abstraction** : Classes abstraites et interfaces
-- ✅ **Design Patterns** : Singleton (DatabaseConnection), DAO, MVC
-- ✅ **Gestion d'exceptions** : Exceptions personnalisées
-- ✅ **Thread-safety** : Double-Checked Locking pour Singleton
+-  **Héritage** : Document, Personne
+-  **Polymorphisme** : Empruntable interface
+-  **Encapsulation** : Attributs private avec getters/setters
+-  **Abstraction** : Classes abstraites et interfaces
+-  **Design Patterns** : Singleton (DatabaseConnection), DAO, MVC
+-  **Gestion d'exceptions** : Exceptions personnalisées
+-  **Thread-safety** : Double-Checked Locking pour Singleton
 
-## 🔒 Sécurité
+##  Sécurité
 
 - Utilisation de **PreparedStatement** pour éviter les injections SQL
 - Validation des données avant insertion en base
 - Gestion sécurisée de la connexion à la base de données
 
-## 📝 Exemples d'Utilisation
+##  Exemples d'Utilisation
 
 ### Ajouter un livre
 ```java
@@ -201,10 +201,10 @@ try {
 }
 ```
 
-## 📄 Licence
+##  Licence
 
 Ce projet est un travail académique pour la formation en POO Java.
 
-## 👥 Auteur
+##  Auteur
 
 Créé à titre éducatif pour démontrer les principes de la programmation orientée objet en Java.
