@@ -14,7 +14,7 @@ public class Magazine extends Document implements Empruntable {
     
     @Override
     public double calculerPenaliteRetard() {
-        return 1.0; // 1 DH par jour
+        return 1.0; 
     }
 
     @Override
